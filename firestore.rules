@@ -1,0 +1,89 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net (default deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Users Collection Rules ---
+    match /users/{userId} {
+      allow read: if isSignedIn(); // Users can view each other's availabilities to sync up
+      allow create: if isOwner(userId)
+                    && incoming().uid == userId
+                    && incoming().displayName is string
+                    && incoming().email is string
+                    && incoming().timeZone is string;
+      allow update: if isOwner(userId)
+                    && incoming().uid == userId
+                    && incoming().displayName is string
+                    && incoming().email is string
+                    && incoming().timeZone is string;
+      allow delete: if isOwner(userId);
+    }
+
+    // --- Groups Collection Rules ---
+    match /groups/{groupId} {
+      allow read: if isSignedIn() && (request.auth.uid in resource.data.members);
+      allow create: if isSignedIn()
+                    && isValidId(groupId)
+                    && incoming().id == groupId
+                    && incoming().creatorId == request.auth.uid
+                    && (request.auth.uid in incoming().members);
+      allow update: if isSignedIn()
+                    && (request.auth.uid in existing().members)
+                    // Ensure creator or existing member can modify (e.g. invite members)
+                    && (request.auth.uid in incoming().members);
+      allow delete: if isSignedIn() && existing().creatorId == request.auth.uid;
+    }
+
+    // --- Event Proposals Collection Rules ---
+    match /eventProposals/{proposalId} {
+      // Allow reading if user is logged in (proposals can be associated with groups)
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+                    && isValidId(proposalId)
+                    && incoming().id == proposalId
+                    && incoming().creatorId == request.auth.uid;
+      allow update: if isSignedIn()
+                    // Allow creators to confirm or modify, and group members to cast votes
+                    && (incoming().id == existing().id);
+      allow delete: if isSignedIn() && existing().creatorId == request.auth.uid;
+    }
+
+    // --- Personal Events Collection Rules ---
+    match /personalEvents/{eventId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn()
+                    && isValidId(eventId)
+                    && incoming().id == eventId
+                    && incoming().userId == request.auth.uid;
+      allow update: if isSignedIn()
+                    && existing().userId == request.auth.uid
+                    && incoming().userId == request.auth.uid;
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+  }
+}

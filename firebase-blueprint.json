@@ -1,0 +1,91 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Holds the public profile, time zone and weekly availability slots for each user.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "timeZone": { "type": "string" },
+        "weeklyAvailability": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "displayName", "email", "timeZone", "weeklyAvailability"]
+    },
+    "Group": {
+      "title": "Group",
+      "description": "Represents a synchronization group composed of multiple users.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "creatorId": { "type": "string" },
+        "creatorName": { "type": "string" },
+        "members": { "type": "array" },
+        "memberDetails": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "creatorId", "creatorName", "members"]
+    },
+    "EventProposal": {
+      "title": "EventProposal",
+      "description": "A group event or meeting proposal that users can vote on.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "groupId": { "type": "string" },
+        "groupName": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "proposedDate": { "type": "string" },
+        "proposedTimeStart": { "type": "string" },
+        "proposedTimeEnd": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "cancelled"] },
+        "creatorId": { "type": "string" },
+        "creatorName": { "type": "string" },
+        "votes": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "groupId", "title", "proposedDate", "proposedTimeStart", "proposedTimeEnd", "status", "creatorId", "creatorName"]
+    },
+    "PersonalEvent": {
+      "title": "PersonalEvent",
+      "description": "An event booked in an individual user's calendar.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "date": { "type": "string" },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "userId": { "type": "string" },
+        "groupId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "date", "startTime", "endTime", "userId"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Individual user profiles and availabilities."
+    },
+    "groups/{groupId}": {
+      "schema": "Group",
+      "description": "Scheduling groups."
+    },
+    "eventProposals/{proposalId}": {
+      "schema": "EventProposal",
+      "description": "Proposals for group events."
+    },
+    "personalEvents/{eventId}": {
+      "schema": "PersonalEvent",
+      "description": "Events in user calendars."
+    }
+  }
+}

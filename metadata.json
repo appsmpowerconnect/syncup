@@ -1,0 +1,8 @@
+{
+  "name": "SyncUp",
+  "description": "Sincronize agendas em grupos e descubra horários comuns para reuniões e encontros de forma rápida.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
